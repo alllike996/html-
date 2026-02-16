@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沉浸式时光台</title>
+    <!-- 引入 Lunar 农历库 -->
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.2.37/lunar.min.js"></script>
+    <style>
+        /* ================= 变量定义 ================= */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-main: #2c3e50;
+            --text-sec: #596b7e;
+            --accent: #6c5ce7;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --btn-bg: rgba(255, 255, 255, 0.6);
+            --holiday-color: #ff4757; /* 节假日颜色 */
+            --lunar-color: #888;      /* 农历颜色 */
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --glass-bg: rgba(30, 30, 30, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ecf0f1;
+            --text-sec: #bdc3c7;
+            --accent: #00b894;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --btn-bg: rgba(255, 255, 255, 0.1);
+            --holiday-color: #ff6b81;
+            --lunar-color: #aaa;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            background-size: 200% 200%;
+            animation: gradientMove 15s ease infinite;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: color 0.3s;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 主容器 */
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr; /* 左侧日历宽一点 */
+            gap: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 25px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* 卡片通用 */
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 25px;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover { transform: translateY(-3px); }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        h2 { font-size: 1.1rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* 顶部栏 */
+        .top-bar {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .app-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+        .theme-switch {
+            background: var(--btn-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* ================= 左侧：时钟+日历 (优化间距) ================= */
+        .time-cal-section {
+            /* 关键修改：取消 space-between，改用 flex-start + gap 缩小间距 */
+            justify-content: flex-start; 
+            gap: 30px; 
+            height: 100%;
+        }
+
+        /* 时钟区域 */
+        .clock-header {
+            text-align: center;
+            padding-bottom: 10px;
+            /* 移除底边框，让视觉更融合，或者保留淡边框 */
+            /* border-bottom: 1px solid var(--glass-border); */
+        }
+        .time-big {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1;
+            background: linear-gradient(to right, var(--text-main), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .date-full { font-size: 1.1rem; color: var(--text-sec); display: flex; justify-content: center; gap: 10px;}
+        .nongli-info { font-size: 0.95rem; color: var(--accent); font-weight: 500; margin-top: 5px; }
+
+        /* 日历区域 */
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .cal-btn {
+            background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-main);
+            padding: 5px 12px; border-radius: 8px; transition: 0.2s;
+        }
+        .cal-btn:hover { background: var(--btn-bg); color: var(--accent); }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            text-align: center;
+        }
+        .day-label { font-size: 0.85rem; color: var(--text-sec); font-weight: 600; padding-bottom: 8px; }
+        
+        /* 日期格子优化：容纳农历 */
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column; /* 上下排列：公历在上，农历在下 */
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            cursor: default;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .day-cell:hover:not(.empty) { background: var(--btn-bg); }
+        
+        .gregorian { font-size: 1.1rem; font-weight: 600; line-height: 1.2; }
+        .lunar { font-size: 0.7rem; color: var(--lunar-color); line-height: 1.2; margin-top: 2px;}
+        
+        /* 今天样式 */
+        .day-cell.today {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .day-cell.today .lunar { color: rgba(255,255,255,0.8); }
+
+        /* 节日样式 */
+        .day-cell.holiday .lunar { color: var(--holiday-color); font-weight: bold; }
+        .day-cell.today.holiday .lunar { color: #ffcccc; }
+
+        /* ================= 右侧：工具区 ================= */
+        .tools-col { display: flex; flex-direction: column; gap: 20px; }
+
+        /* 计算器 */
+        .calc-screen {
+            width: 100%; height: 50px; background: rgba(0,0,0,0.03);
+            border: none; border-radius: 10px; margin-bottom: 10px;
+            text-align: right; padding: 10px; font-size: 1.5rem;
+            color: var(--text-main); font-family: 'Courier New', monospace;
+        }
+        .calc-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .c-btn {
+            padding: 12px; border: none; border-radius: 10px; font-size: 1rem;
+            cursor: pointer; background: var(--btn-bg); color: var(--text-main);
+            transition: 0.2s;
+        }
+        .c-btn:hover { background: var(--glass-border); transform: scale(1.05); }
+        .c-btn.opt { color: var(--accent); font-weight: bold; }
+        .c-btn.eq { background: var(--accent); color: white; grid-column: span 2; }
+
+        /* 记事本 */
+        .notepad-container { flex-grow: 1; min-height: 200px; }
+        .note-area {
+            width: 100%; flex-grow: 1; background: transparent; border: none;
+            resize: none; color: var(--text-main); font-size: 0.95rem; line-height: 1.6;
+            background-image: linear-gradient(transparent 95%, var(--glass-border) 95%);
+            background-size: 100% 1.6rem;
+        }
+        .note-status { font-size: 0.75rem; color: var(--accent); text-align: right; opacity: 0; transition: opacity 0.5s; }
+        .note-status.show { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; padding: 15px; gap: 15px; }
+            .time-big { font-size: 3rem; }
+            .time-cal-section { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 顶部 -->
+        <div class="top-bar">
+            <div class="app-title">⏳ 沉浸式时光台</div>
+            <button class="theme-switch" onclick="toggleTheme()">
+                <span id="themeIcon">🌙</span> 模式
+            </button>
+        </div>
+
+        <!-- 左侧：时间 + 农历日历 -->
+        <div class="card time-cal-section">
+            <!-- 头部：大时钟 -->
+            <div class="clock-header">
+                <div class="time-big" id="clockTime">00:00:00</div>
+                <div class="date-full">
+                    <span id="clockDate">加载中...</span>
+                </div>
+                <!-- 农历大字显示 -->
+                <div class="nongli-info" id="nongliBig">正在计算农历...</div>
+            </div>
+
+            <!-- 底部：日历网格 -->
+            <div class="calendar-wrapper">
+                <div class="calendar-controls">
+                    <button class="cal-btn" onclick="changeMonth(-1)">&#10094;</button>
+                    <span id="calTitle">2023年 10月</span>
+                    <button class="cal-btn" onclick="changeMonth(1)">&#10095;</button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- JS动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：工具栏 -->
+        <div class="tools-col">
+            <!-- 计算器 -->
+            <div class="card">
+                <div class="header-row"><h2>🧮 快捷计算</h2></div>
+                <input type="text" class="calc-screen" id="calcScreen" readonly>
+                <div class="calc-pad">
+                    <button class="c-btn" style="color:#ff4757" onclick="clearCalc()">C</button>
+                    <button class="c-btn" onclick="backspace()">←</button>
+                    <button class="c-btn opt" onclick="insert('/')">÷</button>
+                    <button class="c-btn opt" onclick="insert('*')">×</button>
+                    <button class="c-btn" onclick="insert('7')">7</button>
+                    <button class="c-btn" onclick="insert('8')">8</button>
+                    <button class="c-btn" onclick="insert('9')">9</button>
+                    <button class="c-btn opt" onclick="insert('-')">-</button>
+                    <button class="c-btn" onclick="insert('4')">4</button>
+                    <button class="c-btn" onclick="insert('5')">5</button>
+                    <button class="c-btn" onclick="insert('6')">6</button>
+                    <button class="c-btn opt" onclick="insert('+')">+</button>
+                    <button class="c-btn" onclick="insert('1')">1</button>
+                    <button class="c-btn" onclick="insert('2')">2</button>
+                    <button class="c-btn" onclick="insert('3')">3</button>
+                    <button class="c-btn eq" onclick="calc()">=</button>
+                    <button class="c-btn" onclick="insert('0')" style="grid-column: span 2">0</button>
+                    <button class="c-btn" onclick="insert('.')">.</button>
+                </div>
+            </div>
+
+            <!-- 记事本 -->
+            <div class="card notepad-container">
+                <div class="header-row"><h2>📝 备忘录</h2></div>
+                <textarea id="myNote" class="note-area" placeholder="在此记录今日想法..."></textarea>
+                <div id="saveTip" class="note-status">已自动保存</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= 1. 主题切换 =================
+        const body = document.body;
+        const icon = document.getElementById('themeIcon');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        
+        function applyTheme(theme) {
+            body.setAttribute('data-theme', theme);
+            icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('theme', theme);
+        }
+        function toggleTheme() {
+            const current = body.getAttribute('data-theme');
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        }
+        applyTheme(savedTheme);
+
+        // ================= 2. 时钟与实时农历 =================
+        function updateClock() {
+            const now = new Date();
+            // 时间
+            document.getElementById('clockTime').textContent = now.toLocaleTimeString('zh-CN', {hour12: false});
+            // 公历日期
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('clockDate').textContent = now.toLocaleDateString('zh-CN', options);
+            
+            // 实时更新头部大农历
+            try {
+                const lunar = Lunar.fromDate(now);
+                const holiday = getHolidayText(lunar);
+                const jieQi = lunar.getJieQi();
+                let extra = holiday ? ` · ${holiday}` : (jieQi ? ` · ${jieQi}` : '');
+                
+                document.getElementById('nongliBig').textContent = 
+                    `${lunar.getYearInGanZhi()}年 ${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}${extra}`;
+            } catch (e) {
+                // 如果库还没加载完
+                document.getElementById('nongliBig').textContent = "加载农历中...";
+            }
+        }
+        setInterval(updateClock, 1000);
+
+        // ================= 3. 日历逻辑 (含农历/节日) =================
+        let calDate = new Date();
+
+        // 获取节日或特殊显示的辅助函数
+        function getHolidayText(lunarObj) {
+            // 农历节日
+            const festivals = lunarObj.getFestivals();
+            if (festivals.length > 0) return festivals[0];
+            
+            // 24节气
+            const jieQi = lunarObj.getJieQi();
+            if (jieQi) return jieQi;
+
+            // 公历节日 (通过 Solar 对象，Lunar库自带)
+            const solar = lunarObj.getSolar();
+            const solarFestivals = solar.getFestivals();
+            if (solarFestivals.length > 0) return solarFestivals[0];
+
+            return null;
+        }
+
+        function renderCalendar() {
+            const year = calDate.getFullYear();
+            const month = calDate.getMonth();
+            const today = new Date();
+
+            document.getElementById('calTitle').textContent = `${year}年 ${month + 1}月`;
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // 星期头
+            ['日','一','二','三','四','五','六'].forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'day-label';
+                el.textContent = d;
+                grid.appendChild(el);
+            });
+
+            // 计算排版
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysTotal = new Date(year, month + 1, 0).getDate();
+
+            // 填充空白
+            for(let i=0; i<firstDay; i++) {
+                const el = document.createElement('div');
+                el.className = 'day-cell empty';
+                grid.appendChild(el);
+            }
+
+            // 填充日期
+            for(let i=1; i<=daysTotal; i++) {
+                const el = document.createElement('div');
+                el.className = 'day-cell';
+                
+                // 构造日期对象用于计算农历
+                const currentD = new Date(year, month, i);
+                
+                // 1. 公历数字
+                const gSpan = document.createElement('span');
+                gSpan.className = 'gregorian';
+                gSpan.textContent = i;
+                
+                // 2. 农历/节日文字
+                const lSpan = document.createElement('span');
+                lSpan.className = 'lunar';
+                
+                try {
+                    const lunar = Lunar.fromDate(currentD);
+                    const text = getHolidayText(lunar);
+                    
+                    if (text) {
+                        lSpan.textContent = text;
+                        el.classList.add('holiday'); // 标记为节日，变红
+                    } else {
+                        lSpan.textContent = lunar.getDayInChinese(); // 初一、十五...
+                        // 初一显示月份
+                        if (lunar.getDay() === 1) lSpan.textContent = lunar.getMonthInChinese() + '月';
+                    }
+                } catch(e) {
+                    lSpan.textContent = '-';
+                }
+
+                el.appendChild(gSpan);
+                el.appendChild(lSpan);
+
+                // 标记今天
+                if(i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    el.classList.add('today');
+                }
+                
+                grid.appendChild(el);
+            }
+        }
+
+        function changeMonth(step) {
+            calDate.setMonth(calDate.getMonth() + step);
+            renderCalendar();
+        }
+        
+        // 确保 Lunar 库加载后再渲染
+        window.onload = function() {
+            updateClock();
+            renderCalendar();
+        };
+
+        // ================= 4. 工具功能 (计算器/记事本) =================
+        const screen = document.getElementById('calcScreen');
+        function insert(char) { screen.value += char; }
+        function clearCalc() { screen.value = ''; }
+        function backspace() { screen.value = screen.value.slice(0, -1); }
+        function calc() {
+            try { if(screen.value) screen.value = eval(screen.value); } 
+            catch { screen.value = 'Error'; setTimeout(() => screen.value = '', 800); }
+        }
+
+        const note = document.getElementById('myNote');
+        const tip = document.getElementById('saveTip');
+        let timeout;
+        note.value = localStorage.getItem('lumi_note') || '';
+        note.addEventListener('input', () => {
+            localStorage.setItem('lumi_note', note.value);
+            tip.classList.add('show');
+            clearTimeout(timeout);
+            timeout = setTimeout(() => tip.classList.remove('show'), 1500);
+        });
+
+    </script>
+</body>
+</html>
