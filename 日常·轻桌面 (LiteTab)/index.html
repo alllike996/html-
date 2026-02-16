@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人多功能仪表盘</title>
+    <style>
+        /* ================= 定义变量与主题 ================= */
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --secondary-text: #666666;
+            --accent-color: #4e8cff;
+            --border-color: #e1e4e8;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --btn-bg: #f0f2f5;
+            --btn-hover: #e4e6eb;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #18191a;
+            --card-bg: #242526;
+            --text-color: #e4e6eb;
+            --secondary-text: #b0b3b8;
+            --accent-color: #4e8cff;
+            --border-color: #3e4042;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --btn-bg: #3a3b3c;
+            --btn-hover: #4e4f50;
+        }
+
+        /* ================= 全局样式 ================= */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 { font-size: 1.5rem; }
+
+        /* 切换按钮 */
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--text-color);
+            color: var(--text-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-toggle:hover {
+            background-color: var(--btn-hover);
+        }
+
+        /* ================= 仪表盘布局 ================= */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            color: var(--accent-color);
+        }
+
+        /* ================= 1. 时钟样式 ================= */
+        .clock-container {
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .time-display {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .date-display {
+            font-size: 1.2rem;
+            color: var(--secondary-text);
+            margin-top: 10px;
+        }
+
+        /* ================= 2. 日历样式 ================= */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .calendar-header button {
+            background: var(--btn-bg);
+            border: none;
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+        .day-name {
+            font-weight: bold;
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+            padding-bottom: 5px;
+        }
+        .day {
+            padding: 8px;
+            border-radius: 4px;
+            cursor: default;
+        }
+        .day:hover {
+            background-color: var(--btn-hover);
+        }
+        .day.today {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+        }
+        .day.empty { background: none; }
+
+        /* ================= 3. 计算器样式 ================= */
+        .calc-screen {
+            width: 100%;
+            height: 50px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            text-align: right;
+            padding: 10px;
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calc-btn {
+            padding: 15px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+        }
+        .calc-btn:hover { background-color: var(--btn-hover); }
+        .calc-btn.operator { color: var(--accent-color); font-weight: bold; }
+        .calc-btn.equal { background-color: var(--accent-color); color: white; grid-column: span 2; }
+        .calc-btn.clear { color: #ff4e4e; }
+
+        /* ================= 4. 记事本样式 ================= */
+        .notepad textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            resize: none;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        .notepad-status {
+            font-size: 0.8rem;
+            color: var(--secondary-text);
+            margin-top: 5px;
+            text-align: right;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🔧 个人工作台</h1>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+            <span id="themeIcon">🌙</span> 切换模式
+        </button>
+    </header>
+
+    <div class="dashboard">
+        
+        <!-- 1. 时钟模块 -->
+        <div class="card">
+            <h2>🕒 当前时间</h2>
+            <div class="clock-container">
+                <div class="time-display" id="clockTime">00:00:00</div>
+                <div class="date-display" id="clockDate">正在加载...</div>
+            </div>
+        </div>
+
+        <!-- 2. 日历模块 -->
+        <div class="card">
+            <h2>📅 日历</h2>
+            <div class="calendar-header">
+                <button onclick="changeMonth(-1)">&#10094;</button>
+                <span id="calendarMonthYear" style="font-weight:bold;"></span>
+                <button onclick="changeMonth(1)">&#10095;</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- JS 填充 -->
+            </div>
+        </div>
+
+        <!-- 3. 计算器模块 -->
+        <div class="card">
+            <h2>🧮 计算器</h2>
+            <input type="text" class="calc-screen" id="calcScreen" readonly>
+            <div class="calc-buttons">
+                <button class="calc-btn clear" onclick="clearCalc()">C</button>
+                <button class="calc-btn operator" onclick="appendCalc('/')">/</button>
+                <button class="calc-btn operator" onclick="appendCalc('*')">×</button>
+                <button class="calc-btn" onclick="deleteLast()">←</button>
+
+                <button class="calc-btn" onclick="appendCalc('7')">7</button>
+                <button class="calc-btn" onclick="appendCalc('8')">8</button>
+                <button class="calc-btn" onclick="appendCalc('9')">9</button>
+                <button class="calc-btn operator" onclick="appendCalc('-')">-</button>
+
+                <button class="calc-btn" onclick="appendCalc('4')">4</button>
+                <button class="calc-btn" onclick="appendCalc('5')">5</button>
+                <button class="calc-btn" onclick="appendCalc('6')">6</button>
+                <button class="calc-btn operator" onclick="appendCalc('+')">+</button>
+
+                <button class="calc-btn" onclick="appendCalc('1')">1</button>
+                <button class="calc-btn" onclick="appendCalc('2')">2</button>
+                <button class="calc-btn" onclick="appendCalc('3')">3</button>
+                <button class="calc-btn equal" onclick="calculateResult()">=</button>
+                
+                <button class="calc-btn" onclick="appendCalc('0')" style="grid-column: span 2;">0</button>
+                <button class="calc-btn" onclick="appendCalc('.')">.</button>
+            </div>
+        </div>
+
+        <!-- 4. 记事本模块 -->
+        <div class="card">
+            <h2>📝 简易记事本</h2>
+            <div class="notepad">
+                <textarea id="notepadArea" placeholder="在这里输入你的备忘录... (自动保存)"></textarea>
+                <div class="notepad-status" id="saveStatus">内容将自动保存</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ================= 1. 黑夜/白天切换逻辑 =================
+        const body = document.body;
+        const themeIcon = document.getElementById('themeIcon');
+        
+        // 检查本地存储的主题
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            body.setAttribute('data-theme', currentTheme);
+            updateThemeIcon(currentTheme);
+        }
+
+        function toggleTheme() {
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // ================= 2. 时钟逻辑 =================
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', { hour12: false });
+            const dateString = now.toLocaleDateString('zh-CN', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+
+            document.getElementById('clockTime').textContent = timeString;
+            document.getElementById('clockDate').textContent = dateString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ================= 3. 日历逻辑 =================
+        let currentCalendarDate = new Date();
+
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+            document.getElementById('calendarMonthYear').textContent = `${year}年 ${monthNames[month]}`;
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = ''; // 清空
+
+            // 星期头
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            weekDays.forEach(day => {
+                const div = document.createElement('div');
+                div.className = 'day-name';
+                div.textContent = day;
+                grid.appendChild(div);
+            });
+
+            // 获取当月第一天是星期几
+            const firstDay = new Date(year, month, 1).getDay();
+            // 获取当月总天数
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // 填充空白
+            for (let i = 0; i < firstDay; i++) {
+                const div = document.createElement('div');
+                div.className = 'day empty';
+                grid.appendChild(div);
+            }
+
+            // 填充日期
+            const today = new Date();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const div = document.createElement('div');
+                div.className = 'day';
+                div.textContent = i;
+                
+                // 检查是否是今天
+                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    div.classList.add('today');
+                }
+                
+                grid.appendChild(div);
+            }
+        }
+
+        function changeMonth(step) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + step);
+            renderCalendar();
+        }
+        renderCalendar();
+
+        // ================= 4. 计算器逻辑 =================
+        const calcScreen = document.getElementById('calcScreen');
+
+        function appendCalc(val) {
+            calcScreen.value += val;
+        }
+
+        function clearCalc() {
+            calcScreen.value = '';
+        }
+
+        function deleteLast() {
+            calcScreen.value = calcScreen.value.slice(0, -1);
+        }
+
+        function calculateResult() {
+            try {
+                // 使用 Function 而不是 eval 稍微安全一点，但在客户端纯前端应用中 eval 也是可接受的
+                if(calcScreen.value === '') return;
+                calcScreen.value = eval(calcScreen.value);
+            } catch (e) {
+                calcScreen.value = '错误';
+                setTimeout(() => calcScreen.value = '', 1000);
+            }
+        }
+
+        // ================= 5. 记事本逻辑 =================
+        const notepad = document.getElementById('notepadArea');
+        const saveStatus = document.getElementById('saveStatus');
+
+        // 加载保存的内容
+        const savedNote = localStorage.getItem('myNote');
+        if (savedNote) {
+            notepad.value = savedNote;
+        }
+
+        // 监听输入并保存
+        notepad.addEventListener('input', function() {
+            localStorage.setItem('myNote', this.value);
+            saveStatus.textContent = '已保存...';
+            setTimeout(() => {
+                saveStatus.textContent = '内容将自动保存';
+            }, 1000);
+        });
+
+    </script>
+</body>
+</html>
