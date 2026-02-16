@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniPlayer Pro v1.2 - 全能播放器</title>
+    <title>OmniPlayer Pro v1.3 - 全能播放器</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
@@ -13,18 +13,19 @@
             --primary: #4facfe;
             --primary-grad: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
             --bg-color: #f0f2f5;
-            --card-bg: rgba(255, 255, 255, 0.95); /* 稍微增加透明度适配背景图 */
+            /* 增加透明度以透出背景图 */
+            --card-bg: rgba(255, 255, 255, 0.85); 
             --text-main: #333;
-            --panel-bg: rgba(255, 255, 255, 0.95);
+            --panel-bg: rgba(255, 255, 255, 0.90);
             --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
         }
 
         [data-theme="dark"] {
             --bg-color: #121212;
-            --card-bg: rgba(30, 30, 30, 0.95);
+            --card-bg: rgba(30, 30, 30, 0.85);
             --text-main: #e0e0e0;
-            --panel-bg: rgba(30, 30, 30, 0.95);
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --panel-bg: rgba(30, 30, 30, 0.90);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
@@ -32,16 +33,23 @@
         body { 
             font-family: 'Segoe UI', sans-serif; 
             background-color: var(--bg-color); 
+            /* =========================================
+               这里设置默认背景图
+               确保 0eac.jpg 与 html 文件在同一目录下
+               ========================================= */
+            background-image: url('0eac.jpg'); 
+            background-repeat: no-repeat;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            
             color: var(--text-main); 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             padding: 20px; 
             min-height: 100vh; 
-            transition: background-color 0.3s;
+            transition: color 0.3s; /* 背景图切换不需要过渡动画，避免闪烁 */
         }
         
         /* 顶部与通用 */
@@ -50,7 +58,7 @@
             margin-bottom: 20px; align-items: center; 
             background: var(--card-bg); padding: 15px 20px; border-radius: 12px;
             box-shadow: var(--shadow);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px); /* 毛玻璃效果 */
         }
         
         .title-group { display: flex; align-items: center; gap: 10px; }
@@ -98,7 +106,7 @@
             width: 280px; background: var(--panel-bg); color: var(--text-main);
             border-radius: 12px; padding: 15px; display: none;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 10;
-            backdrop-filter: blur(10px); max-height: 80%; overflow-y: auto;
+            backdrop-filter: blur(12px); max-height: 80%; overflow-y: auto;
         }
         .settings-panel.active { display: block; animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -115,13 +123,13 @@
 
         /* 文件上传区域 */
         .input-area { width: 100%; max-width: 1000px; margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .drop-zone { border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 12px; cursor: pointer; background: var(--card-bg); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: var(--shadow); }
+        .drop-zone { border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 12px; cursor: pointer; background: var(--card-bg); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: var(--shadow); backdrop-filter: blur(5px); }
         .drop-zone:hover { border-color: var(--primary); transform: translateY(-2px); }
-        .url-zone { display: flex; gap: 10px; background: var(--card-bg); padding: 20px; border-radius: 12px; align-items: center; box-shadow: var(--shadow); }
+        .url-zone { display: flex; gap: 10px; background: var(--card-bg); padding: 20px; border-radius: 12px; align-items: center; box-shadow: var(--shadow); backdrop-filter: blur(5px); }
         .url-input { flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #ddd; background: transparent; color: var(--text-main); }
 
         /* 历史记录 */
-        .history-panel { width: 100%; max-width: 1000px; margin-top: 20px; background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: var(--shadow); }
+        .history-panel { width: 100%; max-width: 1000px; margin-top: 20px; background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: var(--shadow); backdrop-filter: blur(5px); }
         .history-list { list-style: none; max-height: 100px; overflow-y: auto; margin-top: 10px; }
         .history-item { font-size: 0.9rem; padding: 8px 0; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; }
         .history-item:hover { color: var(--primary); }
@@ -134,23 +142,19 @@
     <header>
         <div class="title-group">
             <h1><i class="fas fa-film"></i> OmniPlayer Pro</h1>
-            <span class="version-tag">v1.2</span>
+            <span class="version-tag">v1.3</span>
         </div>
         <button class="btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     </header>
 
     <div class="player-wrapper" id="dropArea">
         <video id="video" playsinline crossorigin="anonymous"></video>
-        
-        <!-- 字幕轨道占位 -->
         <track id="extTrack" kind="subtitles" label="外部字幕" srclang="zh">
-
-        <!-- 控制层 -->
+        
         <div class="controls-overlay">
             <div class="progress-container" id="progressBar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-
             <div class="ctrl-row">
                 <div class="ctrl-group">
                     <button class="icon-btn" id="playBtn"><i class="fas fa-play"></i></button>
@@ -167,9 +171,7 @@
             </div>
         </div>
 
-        <!-- 悬浮设置面板 -->
         <div class="settings-panel" id="settingsPanel">
-            <!-- 1. 声道控制 -->
             <div class="setting-item">
                 <label class="setting-label">🔊 声道模式 (Web Audio)</label>
                 <div class="channel-group">
@@ -179,24 +181,23 @@
                 </div>
             </div>
 
-            <!-- 2. 背景设置 (新增) -->
+            <!-- 背景设置 v1.3 更新 -->
             <div class="setting-item">
-                <label class="setting-label">🖼️ 播放器背景</label>
+                <label class="setting-label">🖼️ 背景设置 (本地)</label>
                 <button class="btn" style="width:100%; font-size:0.8rem; justify-content: center;" onclick="document.getElementById('bgInput').click()">
-                    <i class="fas fa-image"></i> 上传背景图
+                    <i class="fas fa-image"></i> 临时更换背景
                 </button>
                 <button class="btn" style="width:100%; font-size:0.8rem; margin-top:5px; justify-content: center; color: #ff6b6b;" onclick="resetBackground()">
-                    <i class="fas fa-undo"></i> 恢复默认
+                    <i class="fas fa-undo"></i> 恢复默认 (0eac.jpg)
                 </button>
+                <div style="font-size:0.7rem; color:#888; margin-top:4px; text-align:center;">*仅当前会话有效，不修改源文件</div>
             </div>
 
-            <!-- 3. 音轨选择 -->
             <div class="setting-item" id="audioTrackSection" style="display:none;">
                 <label class="setting-label">🎵 切换音轨 (HLS)</label>
                 <select id="audioTrackSelect" class="setting-select"></select>
             </div>
 
-            <!-- 4. 字幕选择 -->
             <div class="setting-item">
                 <label class="setting-label">💬 字幕选择</label>
                 <select id="subTrackSelect" class="setting-select">
@@ -207,7 +208,6 @@
                 </button>
             </div>
 
-            <!-- 5. 速度 -->
             <div class="setting-item">
                 <label class="setting-label">🚀 播放速度: <span id="speedVal">1.0x</span></label>
                 <input type="range" min="0.5" max="2" step="0.25" value="1" style="width:100%" oninput="setSpeed(this.value)">
@@ -215,7 +215,6 @@
         </div>
     </div>
 
-    <!-- 输入区域 -->
     <div class="input-area">
         <div class="drop-zone" id="dragBox">
             <i class="fas fa-cloud-upload-alt fa-2x" style="color:var(--primary); margin-bottom:10px;"></i>
@@ -228,27 +227,27 @@
         </div>
     </div>
 
-    <!-- 历史记录 -->
     <div class="history-panel">
         <h4 style="margin-bottom:10px; border-bottom:1px solid #ddd; padding-bottom:5px;">🕒 播放历史</h4>
         <ul class="history-list" id="historyList"></ul>
         <button class="btn" onclick="clearHistory()" style="font-size:0.8rem; margin-top:5px;">清空历史</button>
     </div>
 
-    <!-- 隐藏的文件输入 -->
     <input type="file" id="videoFile" style="display:none" accept="video/*,.mkv,.flv">
     <input type="file" id="subFile" style="display:none" accept=".vtt,.srt">
     <input type="file" id="bgInput" style="display:none" accept="image/*">
 
     <script>
-        // ================= 核心变量 =================
+        // ================= 变量定义 =================
         const video = document.getElementById('video');
         const hls = new Hls();
         let audioCtx, sourceNode, splitterNode, mergerNode, leftGain, rightGain;
         let isAudioCtxInit = false;
 
-        // ================= 1. 背景设置逻辑 (新增) =================
+        // ================= 1. 背景控制 (v1.3 修改) =================
         const bgInput = document.getElementById('bgInput');
+        
+        // 更换背景 (本地内存操作)
         bgInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -260,11 +259,12 @@
             }
         });
 
+        // 恢复默认 (指向同目录下的 0eac.jpg)
         function resetBackground() {
-            document.body.style.backgroundImage = 'none';
+            document.body.style.backgroundImage = "url('0eac.jpg')";
         }
 
-        // ================= 2. Web Audio API 声道分离逻辑 =================
+        // ================= 2. Web Audio API (声道) =================
         function initAudioContext() {
             if (isAudioCtxInit) return;
             try {
@@ -284,9 +284,7 @@
                 mergerNode.connect(audioCtx.destination);
                 
                 isAudioCtxInit = true;
-            } catch (e) {
-                console.warn("AudioContext Init Failed:", e);
-            }
+            } catch (e) { console.warn("AudioContext Init Failed:", e); }
         }
 
         function setChannel(mode) {
@@ -318,7 +316,7 @@
             }
         }
 
-        // ================= 3. 播放与加载逻辑 =================
+        // ================= 3. 加载逻辑 =================
         function loadVideo(src, type, name) {
             saveHistory(name, src);
             document.getElementById('audioTrackSection').style.display = 'none';
