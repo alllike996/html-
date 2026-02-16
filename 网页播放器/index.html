@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniPlayer Pro - 声道与字幕控制版</title>
+    <title>OmniPlayer Pro v1.2 - 全能播放器</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.bootcss.com/flv.js/1.5.0/flv.min.js"></script>
@@ -13,32 +13,63 @@
             --primary: #4facfe;
             --primary-grad: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
             --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.95); /* 稍微增加透明度适配背景图 */
             --text-main: #333;
             --panel-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
         }
 
         [data-theme="dark"] {
             --bg-color: #121212;
-            --card-bg: #1e1e1e;
+            --card-bg: rgba(30, 30, 30, 0.95);
             --text-main: #e0e0e0;
             --panel-bg: rgba(30, 30, 30, 0.95);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-main); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+        
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background-color: var(--bg-color); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-main); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            min-height: 100vh; 
+            transition: background-color 0.3s;
+        }
         
         /* 顶部与通用 */
-        header { width: 100%; max-width: 1000px; display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
-        h1 { font-size: 1.5rem; background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: var(--card-bg); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
-        .btn:hover { background: #eee; }
-        [data-theme="dark"] .btn:hover { background: #333; border-color: #555; }
+        header { 
+            width: 100%; max-width: 1000px; display: flex; justify-content: space-between; 
+            margin-bottom: 20px; align-items: center; 
+            background: var(--card-bg); padding: 15px 20px; border-radius: 12px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(5px);
+        }
+        
+        .title-group { display: flex; align-items: center; gap: 10px; }
+        h1 { font-size: 1.5rem; background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        
+        .version-tag {
+            font-size: 0.75rem; background: var(--primary); color: white; 
+            padding: 2px 8px; border-radius: 12px; font-weight: bold; vertical-align: middle;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: transparent; color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn:hover { background: rgba(0,0,0,0.05); }
+        [data-theme="dark"] .btn:hover { background: rgba(255,255,255,0.1); border-color: #555; }
 
         /* 播放器容器 */
         .player-wrapper {
             width: 100%; max-width: 1000px; position: relative; aspect-ratio: 16/9;
-            background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: #000; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);
         }
         video { width: 100%; height: 100%; object-fit: contain; }
 
@@ -61,36 +92,38 @@
         .icon-btn { cursor: pointer; font-size: 1.1rem; color: #fff; background: none; border: none; }
         .icon-btn:hover { color: var(--primary); }
 
-        /* ====== 设置弹窗 (关键新增) ====== */
+        /* ====== 设置弹窗 ====== */
         .settings-panel {
             position: absolute; bottom: 60px; right: 15px;
-            width: 260px; background: var(--panel-bg); color: var(--text-main);
-            border-radius: 8px; padding: 15px; display: none;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 10;
-            backdrop-filter: blur(10px);
+            width: 280px; background: var(--panel-bg); color: var(--text-main);
+            border-radius: 12px; padding: 15px; display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 10;
+            backdrop-filter: blur(10px); max-height: 80%; overflow-y: auto;
         }
-        .settings-panel.active { display: block; }
+        .settings-panel.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .setting-item { margin-bottom: 15px; }
+        .setting-item { margin-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; }
+        .setting-item:last-child { border-bottom: none; margin-bottom: 0; }
         .setting-label { font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; display: block; color: var(--primary); }
-        .setting-select { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc; background: var(--bg-color); color: var(--text-main); }
+        .setting-select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; background: transparent; color: var(--text-main); }
         
         /* 声道按钮组 */
         .channel-group { display: flex; gap: 5px; }
-        .ch-btn { flex: 1; font-size: 0.8rem; padding: 5px; cursor: pointer; border: 1px solid #ccc; background: transparent; color: var(--text-main); border-radius: 4px; }
+        .ch-btn { flex: 1; font-size: 0.8rem; padding: 6px; cursor: pointer; border: 1px solid #ccc; background: transparent; color: var(--text-main); border-radius: 4px; }
         .ch-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         /* 文件上传区域 */
         .input-area { width: 100%; max-width: 1000px; margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .drop-zone { border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; background: var(--card-bg); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .drop-zone:hover { border-color: var(--primary); background: rgba(79, 172, 254, 0.1); }
-        .url-zone { display: flex; gap: 10px; background: var(--card-bg); padding: 20px; border-radius: 8px; align-items: center; }
-        .url-input { flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #ddd; background: var(--bg-color); color: var(--text-main); }
+        .drop-zone { border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 12px; cursor: pointer; background: var(--card-bg); transition: 0.3s; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: var(--shadow); }
+        .drop-zone:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .url-zone { display: flex; gap: 10px; background: var(--card-bg); padding: 20px; border-radius: 12px; align-items: center; box-shadow: var(--shadow); }
+        .url-input { flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #ddd; background: transparent; color: var(--text-main); }
 
-        /* 历史记录简易版 */
-        .history-panel { width: 100%; max-width: 1000px; margin-top: 20px; background: var(--card-bg); padding: 15px; border-radius: 8px; }
+        /* 历史记录 */
+        .history-panel { width: 100%; max-width: 1000px; margin-top: 20px; background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: var(--shadow); }
         .history-list { list-style: none; max-height: 100px; overflow-y: auto; margin-top: 10px; }
-        .history-item { font-size: 0.9rem; padding: 5px 0; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; }
+        .history-item { font-size: 0.9rem; padding: 8px 0; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; }
         .history-item:hover { color: var(--primary); }
 
         @media (max-width: 768px) { .input-area { grid-template-columns: 1fr; } }
@@ -99,12 +132,14 @@
 <body>
 
     <header>
-        <h1><i class="fas fa-film"></i> OmniPlayer Pro</h1>
-        <button class="btn" onclick="toggleTheme()"><i class="fas fa-moon"></i> 切换模式</button>
+        <div class="title-group">
+            <h1><i class="fas fa-film"></i> OmniPlayer Pro</h1>
+            <span class="version-tag">v1.2</span>
+        </div>
+        <button class="btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     </header>
 
     <div class="player-wrapper" id="dropArea">
-        <!-- crossOrigin 允许 Web Audio API 处理跨域音频 -->
         <video id="video" playsinline crossorigin="anonymous"></video>
         
         <!-- 字幕轨道占位 -->
@@ -124,8 +159,8 @@
                     <input type="range" id="volRange" min="0" max="1" step="0.1" value="1" style="width: 80px">
                 </div>
                 <div class="ctrl-group">
-                    <button class="icon-btn" onclick="toggleSettings()" title="音轨/字幕/声道设置">
-                        <i class="fas fa-cog"></i> 设置
+                    <button class="icon-btn" onclick="toggleSettings()" title="设置">
+                        <i class="fas fa-cog"></i>
                     </button>
                     <button class="icon-btn" onclick="toggleFullscreen()"><i class="fas fa-expand"></i></button>
                 </div>
@@ -134,35 +169,45 @@
 
         <!-- 悬浮设置面板 -->
         <div class="settings-panel" id="settingsPanel">
-            <!-- 1. 声道控制 (针对左右声道分离的视频) -->
+            <!-- 1. 声道控制 -->
             <div class="setting-item">
                 <label class="setting-label">🔊 声道模式 (Web Audio)</label>
                 <div class="channel-group">
                     <button class="ch-btn active" onclick="setChannel('stereo')">立体声</button>
-                    <button class="ch-btn" onclick="setChannel('left')">只听左</button>
-                    <button class="ch-btn" onclick="setChannel('right')">只听右</button>
+                    <button class="ch-btn" onclick="setChannel('left')">左</button>
+                    <button class="ch-btn" onclick="setChannel('right')">右</button>
                 </div>
-                <div style="font-size:0.7rem; color:#888; margin-top:4px;">*用于左伴奏/右人声或双语视频</div>
             </div>
 
-            <!-- 2. 音轨选择 (针对 M3U8 多音轨) -->
+            <!-- 2. 背景设置 (新增) -->
+            <div class="setting-item">
+                <label class="setting-label">🖼️ 播放器背景</label>
+                <button class="btn" style="width:100%; font-size:0.8rem; justify-content: center;" onclick="document.getElementById('bgInput').click()">
+                    <i class="fas fa-image"></i> 上传背景图
+                </button>
+                <button class="btn" style="width:100%; font-size:0.8rem; margin-top:5px; justify-content: center; color: #ff6b6b;" onclick="resetBackground()">
+                    <i class="fas fa-undo"></i> 恢复默认
+                </button>
+            </div>
+
+            <!-- 3. 音轨选择 -->
             <div class="setting-item" id="audioTrackSection" style="display:none;">
                 <label class="setting-label">🎵 切换音轨 (HLS)</label>
                 <select id="audioTrackSelect" class="setting-select"></select>
             </div>
 
-            <!-- 3. 字幕选择 -->
+            <!-- 4. 字幕选择 -->
             <div class="setting-item">
                 <label class="setting-label">💬 字幕选择</label>
                 <select id="subTrackSelect" class="setting-select">
                     <option value="-1">关闭字幕</option>
                 </select>
-                <button class="btn" style="width:100%; margin-top:5px; font-size:0.8rem;" onclick="document.getElementById('subFile').click()">
-                    <i class="fas fa-upload"></i> 加载本地 .vtt/.srt
+                <button class="btn" style="width:100%; margin-top:5px; font-size:0.8rem; justify-content: center;" onclick="document.getElementById('subFile').click()">
+                    <i class="fas fa-upload"></i> 加载 .vtt/.srt
                 </button>
             </div>
 
-            <!-- 4. 速度 & 滤镜简易版 -->
+            <!-- 5. 速度 -->
             <div class="setting-item">
                 <label class="setting-label">🚀 播放速度: <span id="speedVal">1.0x</span></label>
                 <input type="range" min="0.5" max="2" step="0.25" value="1" style="width:100%" oninput="setSpeed(this.value)">
@@ -173,7 +218,7 @@
     <!-- 输入区域 -->
     <div class="input-area">
         <div class="drop-zone" id="dragBox">
-            <i class="fas fa-file-video fa-2x" style="color:var(--primary); margin-bottom:10px;"></i>
+            <i class="fas fa-cloud-upload-alt fa-2x" style="color:var(--primary); margin-bottom:10px;"></i>
             <p>拖拽视频文件到此处</p>
             <p style="font-size:0.8rem; color:#888;">MP4, MKV, M3U8, WEBM</p>
         </div>
@@ -185,14 +230,15 @@
 
     <!-- 历史记录 -->
     <div class="history-panel">
-        <h4 style="margin-bottom:10px; border-bottom:1px solid #ddd; padding-bottom:5px;">播放历史</h4>
+        <h4 style="margin-bottom:10px; border-bottom:1px solid #ddd; padding-bottom:5px;">🕒 播放历史</h4>
         <ul class="history-list" id="historyList"></ul>
-        <button class="btn" onclick="clearHistory()" style="font-size:0.8rem; margin-top:5px;">清空</button>
+        <button class="btn" onclick="clearHistory()" style="font-size:0.8rem; margin-top:5px;">清空历史</button>
     </div>
 
     <!-- 隐藏的文件输入 -->
     <input type="file" id="videoFile" style="display:none" accept="video/*,.mkv,.flv">
     <input type="file" id="subFile" style="display:none" accept=".vtt,.srt">
+    <input type="file" id="bgInput" style="display:none" accept="image/*">
 
     <script>
         // ================= 核心变量 =================
@@ -201,85 +247,80 @@
         let audioCtx, sourceNode, splitterNode, mergerNode, leftGain, rightGain;
         let isAudioCtxInit = false;
 
-        // ================= 1. Web Audio API 声道分离逻辑 =================
+        // ================= 1. 背景设置逻辑 (新增) =================
+        const bgInput = document.getElementById('bgInput');
+        bgInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.body.style.backgroundImage = `url(${evt.target.result})`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function resetBackground() {
+            document.body.style.backgroundImage = 'none';
+        }
+
+        // ================= 2. Web Audio API 声道分离逻辑 =================
         function initAudioContext() {
             if (isAudioCtxInit) return;
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 audioCtx = new AudioContext();
                 sourceNode = audioCtx.createMediaElementSource(video);
-                splitterNode = audioCtx.createChannelSplitter(2); // 分离左右
-                mergerNode = audioCtx.createChannelMerger(2);     // 合并输出
-                
-                // 创建增益节点控制左右音量
+                splitterNode = audioCtx.createChannelSplitter(2);
+                mergerNode = audioCtx.createChannelMerger(2);
                 leftGain = audioCtx.createGain();
                 rightGain = audioCtx.createGain();
 
-                // 连接图: Source -> Splitter -> (Gains) -> Merger -> Destination
                 sourceNode.connect(splitterNode);
-
-                // 默认立体声连接
-                splitterNode.connect(leftGain, 0); // 左 -> 左增益
-                splitterNode.connect(rightGain, 1); // 右 -> 右增益
-                
-                leftGain.connect(mergerNode, 0, 0);  // 左增益 -> 输出左
-                rightGain.connect(mergerNode, 0, 1); // 右增益 -> 输出右
-
+                splitterNode.connect(leftGain, 0); 
+                splitterNode.connect(rightGain, 1); 
+                leftGain.connect(mergerNode, 0, 0);  
+                rightGain.connect(mergerNode, 0, 1); 
                 mergerNode.connect(audioCtx.destination);
                 
                 isAudioCtxInit = true;
-                console.log("AudioContext 初始化成功");
             } catch (e) {
-                console.warn("无法初始化 AudioContext (可能跨域限制):", e);
+                console.warn("AudioContext Init Failed:", e);
             }
         }
 
         function setChannel(mode) {
-            // 确保 Context 已运行
             if (!isAudioCtxInit) initAudioContext();
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             
-            // UI 更新
             document.querySelectorAll('.ch-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
 
             if (!leftGain || !rightGain) return;
-
-            // 断开所有连接，重新路由
             leftGain.disconnect();
             rightGain.disconnect();
 
             if (mode === 'stereo') {
-                // 正常：左->左，右->右
                 splitterNode.connect(leftGain, 0);
                 splitterNode.connect(rightGain, 1);
                 leftGain.connect(mergerNode, 0, 0);
                 rightGain.connect(mergerNode, 0, 1);
             } else if (mode === 'left') {
-                // 只听左：把左声道信号同时送到输出的左和右
-                // 断开右源
                 splitterNode.disconnect(rightGain); 
-                splitterNode.connect(leftGain, 0); // 源左 -> 增益左
-                
-                // 增益左 -> 输出左 AND 输出右
+                splitterNode.connect(leftGain, 0); 
                 leftGain.connect(mergerNode, 0, 0);
                 leftGain.connect(mergerNode, 0, 1);
             } else if (mode === 'right') {
-                // 只听右：把右声道信号同时送到输出的左和右
                 splitterNode.disconnect(leftGain);
                 splitterNode.connect(rightGain, 1);
-                
                 rightGain.connect(mergerNode, 0, 0);
                 rightGain.connect(mergerNode, 0, 1);
             }
         }
 
-        // ================= 2. 播放与加载逻辑 =================
+        // ================= 3. 播放与加载逻辑 =================
         function loadVideo(src, type, name) {
-            // 保存历史
             saveHistory(name, src);
-
-            // 重置状态
             document.getElementById('audioTrackSection').style.display = 'none';
             updateSubList([]); 
 
@@ -288,18 +329,14 @@
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     video.play();
-                    // 初始化音频上下文
                     initAudioContext();
-                    // 检测 M3U8 的多音轨
                     checkHlsAudioTracks();
-                    // 检测 M3U8 的内置字幕
                     updateSubList(hls.subtitleTracks, 'hls');
                 });
             } else {
                 video.src = src;
                 video.play();
                 initAudioContext();
-                // 尝试读取原生内置字幕
                 setTimeout(() => {
                     if(video.textTracks && video.textTracks.length > 0) {
                         updateSubList(video.textTracks, 'native');
@@ -308,74 +345,55 @@
             }
         }
 
-        // 处理 HLS 多音轨 (针对 Apple HLS 格式的多语言)
         function checkHlsAudioTracks() {
             if (hls.audioTracks.length > 1) {
                 const section = document.getElementById('audioTrackSection');
                 const select = document.getElementById('audioTrackSelect');
                 section.style.display = 'block';
                 select.innerHTML = '';
-                
                 hls.audioTracks.forEach((track, index) => {
                     const opt = document.createElement('option');
                     opt.value = index;
-                    opt.text = track.name || `音轨 ${index + 1} (${track.lang || 'unk'})`;
+                    opt.text = track.name || `音轨 ${index + 1}`;
                     select.appendChild(opt);
                 });
-
-                select.onchange = (e) => {
-                    hls.audioTrack = parseInt(e.target.value);
-                };
+                select.onchange = (e) => { hls.audioTrack = parseInt(e.target.value); };
             }
         }
 
-        // 处理字幕列表 (合并 HLS、原生、外部)
         function updateSubList(tracks, type) {
             const select = document.getElementById('subTrackSelect');
-            // 保留第一个“关闭”和最后一个“上传”逻辑，这里简化清空
             select.innerHTML = '<option value="-1">关闭字幕</option>';
-            
             if (type === 'hls') {
                 tracks.forEach((t, i) => {
                     const opt = document.createElement('option');
                     opt.value = i;
-                    opt.text = t.name || `字幕 ${i+1} (${t.lang})`;
+                    opt.text = t.name || `字幕 ${i+1}`;
                     opt.dataset.type = 'hls';
                     select.appendChild(opt);
                 });
             } else if (type === 'native') {
                 for (let i = 0; i < tracks.length; i++) {
-                    const t = tracks[i];
-                    // 忽略隐藏的
                     const opt = document.createElement('option');
                     opt.value = i;
-                    opt.text = t.label || `字幕 ${i+1} (${t.language})`;
+                    opt.text = tracks[i].label || `字幕 ${i+1}`;
                     opt.dataset.type = 'native';
                     select.appendChild(opt);
                 }
             }
         }
 
-        // 字幕切换事件
         document.getElementById('subTrackSelect').addEventListener('change', (e) => {
             const index = parseInt(e.target.value);
             const opt = e.target.options[e.target.selectedIndex];
-            
-            // 1. 关闭所有
             if (hls.subtitleTrack !== undefined) hls.subtitleTrack = -1;
             for(let i=0; i<video.textTracks.length; i++) video.textTracks[i].mode = 'hidden';
-
             if (index === -1) return;
-
-            // 2. 启用选中的
-            if (opt.dataset.type === 'hls') {
-                hls.subtitleTrack = index;
-            } else if (opt.dataset.type === 'native') {
-                video.textTracks[index].mode = 'showing';
-            }
+            if (opt.dataset.type === 'hls') hls.subtitleTrack = index;
+            else if (opt.dataset.type === 'native') video.textTracks[index].mode = 'showing';
         });
 
-        // ================= 3. 基础交互 =================
+        // ================= 4. 基础交互 =================
         const playBtn = document.getElementById('playBtn');
         video.addEventListener('click', togglePlay);
         playBtn.addEventListener('click', togglePlay);
@@ -384,14 +402,13 @@
             if (video.paused) {
                 video.play();
                 playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                initAudioContext(); // 确保 AudioContext 在用户交互后启动
+                initAudioContext();
             } else {
                 video.pause();
                 playBtn.innerHTML = '<i class="fas fa-play"></i>';
             }
         }
 
-        // 进度条
         video.addEventListener('timeupdate', () => {
             const pct = (video.currentTime / video.duration) * 100;
             document.getElementById('progressFill').style.width = pct + '%';
@@ -401,32 +418,23 @@
 
         document.getElementById('progressBar').addEventListener('click', (e) => {
             const rect = e.target.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            video.currentTime = pos * video.duration;
+            video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
         });
 
         function formatTime(s) {
             return new Date(s * 1000).toISOString().substr(14, 5);
         }
 
-        // 拖拽上传
         const dragBox = document.getElementById('dragBox');
         const fileInput = document.getElementById('videoFile');
-        
         dragBox.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
-        
-        dragBox.addEventListener('dragover', (e) => { e.preventDefault(); dragBox.style.background = '#eee'; });
-        dragBox.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dragBox.style.background = '';
-            handleFile(e.dataTransfer.files[0]);
-        });
+        dragBox.addEventListener('dragover', (e) => { e.preventDefault(); });
+        dragBox.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
 
         function handleFile(file) {
             if(!file) return;
-            const url = URL.createObjectURL(file);
-            loadVideo(url, 'file', file.name);
+            loadVideo(URL.createObjectURL(file), 'file', file.name);
         }
 
         function loadUrl() {
@@ -434,18 +442,14 @@
             if(url) loadVideo(url, 'url', '网络视频');
         }
 
-        // 加载外部字幕
         document.getElementById('subFile').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if(!file) return;
-            const track = document.getElementById('extTrack');
-            track.src = URL.createObjectURL(file);
-            // 切换到外部字幕
+            document.getElementById('extTrack').src = URL.createObjectURL(file);
             video.textTracks[0].mode = 'showing'; 
             alert('已加载字幕: ' + file.name);
         });
 
-        // 设置面板切换
         function toggleSettings() {
             document.getElementById('settingsPanel').classList.toggle('active');
         }
@@ -456,7 +460,8 @@
         }
 
         function toggleFullscreen() {
-            if(!document.fullscreenElement) document.querySelector('.player-wrapper').requestFullscreen();
+            const wrapper = document.querySelector('.player-wrapper');
+            if(!document.fullscreenElement) wrapper.requestFullscreen();
             else document.exitFullscreen();
         }
 
@@ -465,9 +470,7 @@
             body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         }
 
-        // 历史记录
         function saveHistory(name, url) {
-            // 简单处理，不使用 LocalStorage 以免代码过长，实际使用可添加
             const list = document.getElementById('historyList');
             const li = document.createElement('li');
             li.className = 'history-item';
