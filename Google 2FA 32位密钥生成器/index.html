@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2FA 密钥生成器</title>
+
+<!-- 本地 favicon -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+/* 背景图 */
+body {
+    background: url('36164226.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* 明暗模式切换 */
+body.light {
+    background: url('36164226.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: black;
+}
+
+/* Toast 提示 */
+.toast {
+    position: fixed; bottom:30px; left:50%;
+    transform:translateX(-50%);
+    background:#16a34a; color:white;
+    padding:8px 16px; border-radius:8px;
+    opacity:0; transition:.3s;
+}
+.toast.show { opacity:1 }
+
+/* 二维码白底 */
+#qrcode canvas { background:white; display:block; margin:auto; }
+</style>
+</head>
+
+<body class="min-h-screen p-6 space-y-6">
+
+<!-- 顶部切换模式 -->
+<div class="flex justify-end mb-4">
+<button id="toggleMode" class="px-4 py-2 bg-gray-700 rounded text-sm">
+切换明暗模式
+</button>
+</div>
+
+<h1 class="text-2xl font-bold text-center">2FA 32位密钥生成器</h1>
+
+<div class="max-w-xl mx-auto space-y-4">
+
+<button onclick="generateSecret()"
+class="w-full py-3 bg-blue-600 rounded text-lg font-semibold">
+生成 32 位密钥
+</button>
+
+<input id="secret" readonly
+class="w-full p-3 rounded bg-gray-800 text-center tracking-widest">
+
+<div class="flex gap-2">
+<input id="issuer" value="Google"
+class="flex-1 p-2 rounded bg-gray-800">
+<input id="account" value="user@example.com"
+class="flex-1 p-2 rounded bg-gray-800">
+</div>
+
+<button onclick="copySecret(secret.value)"
+class="w-full py-2 bg-green-600 rounded">
+复制当前密钥
+</button>
+
+<div id="qrcode" class="flex justify-center mt-4"></div>
+
+<hr class="border-gray-600">
+
+<div class="flex justify-between items-center">
+<h2 class="text-lg font-semibold">历史记录</h2>
+<button onclick="clearHistory()" class="text-red-400 text-sm">
+清空
+</button>
+</div>
+
+<div id="historyList" class="space-y-3"></div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+let qr
+
+/* 明暗模式切换 */
+const toggleBtn = document.getElementById('toggleMode')
+toggleBtn.onclick = () => {
+    document.body.classList.toggle('light')
+}
+
+/* 生成随机密钥 */
+function generateSecret(){
+    const bytes=crypto.getRandomValues(new Uint8Array(20))
+    let bits=""
+    bytes.forEach(b=>bits+=b.toString(2).padStart(8,"0"))
+    let base32=""
+    for(let i=0;i<bits.length;i+=5){
+        base32+=alphabet[parseInt(bits.substr(i,5),2)]
+    }
+    secret.value=base32.slice(0,32)
+    updateQR()
+    saveHistory()
+}
+
+/* 生成二维码 */
+function updateQR(){
+    if(!secret.value) return
+    const uri=`otpauth://totp/${issuer.value}:${account.value}?secret=${secret.value}&issuer=${issuer.value}`
+    qrcode.innerHTML=""
+    qr=new QRCode(document.getElementById("qrcode"),{
+        text:uri,width:200,height:200,colorDark:"#000000",colorLight:"#ffffff"
+    })
+}
+
+/* 复制功能 */
+function copySecret(text){
+    navigator.clipboard.writeText(text)
+    showToast("复制成功")
+}
+function showToast(msg){
+    toast.innerText=msg
+    toast.classList.add("show")
+    setTimeout(()=>toast.classList.remove("show"),2000)
+}
+
+/* 格式化时间 */
+function formatTime(ts){
+    const d=new Date(ts)
+    const yyyy=d.getFullYear()
+    const mm=String(d.getMonth()+1).padStart(2,'0')
+    const dd=String(d.getDate()).padStart(2,'0')
+    const hh=String(d.getHours()).padStart(2,'0')
+    const mi=String(d.getMinutes()).padStart(2,'0')
+    const ss=String(d.getSeconds()).padStart(2,'0')
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`
+}
+
+/* 历史记录操作 */
+function getHistory(){
+    return JSON.parse(localStorage.getItem("totpHistory")||"[]")
+}
+function saveHistory(){
+    let list=getHistory()
+    list.unshift({
+        time:Date.now(),
+        issuer:issuer.value,
+        account:account.value,
+        secret:secret.value
+    })
+    localStorage.setItem("totpHistory",JSON.stringify(list))
+    renderHistory()
+}
+
+function renderHistory(){
+    historyList.innerHTML=""
+    let list=getHistory()
+    list.forEach(item=>{
+        const div=document.createElement("div")
+        div.className="p-4 bg-gray-800 rounded space-y-2"
+
+        div.innerHTML=`
+        <div class="text-sm text-gray-400">${formatTime(item.time)}</div>
+        <div class="font-semibold">${item.issuer}:${item.account}</div>
+        <div class="text-gray-400 tracking-widest">****${item.secret.slice(-6)}</div>
+        <div class="flex gap-2">
+            <button class="copyBtn px-3 py-1 bg-green-600 rounded text-sm">复制</button>
+            <button class="loadBtn px-3 py-1 bg-blue-600 rounded text-sm">加载</button>
+            <button class="delBtn px-3 py-1 bg-red-600 rounded text-sm">删除</button>
+        </div>
+        `
+
+        div.querySelector(".copyBtn").onclick=()=>{copySecret(item.secret)}
+        div.querySelector(".loadBtn").onclick=()=>{
+            secret.value=item.secret
+            issuer.value=item.issuer
+            account.value=item.account
+            updateQR()
+        }
+        div.querySelector(".delBtn").onclick=()=>{deleteItem(item.time)}
+
+        historyList.appendChild(div)
+    })
+}
+
+function deleteItem(time){
+    let list=getHistory().filter(i=>i.time!==time)
+    localStorage.setItem("totpHistory",JSON.stringify(list))
+    renderHistory()
+}
+function clearHistory(){
+    localStorage.removeItem("totpHistory")
+    renderHistory()
+}
+
+/* 输入变化实时刷新二维码 */
+issuer.oninput=updateQR
+account.oninput=updateQR
+
+/* 初始化 */
+generateSecret()
+renderHistory()
+
+</script>
+
+</body>
+</html>
