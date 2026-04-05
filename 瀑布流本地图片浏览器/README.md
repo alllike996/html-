@@ -125,6 +125,55 @@ GitHub 仓库：[https://github.com/ethgan/Image_Viewer/tree/main](https://githu
 
 ***
 
+## 🔧 隐藏社交图标
+
+如果你不想在页面右下角显示社交图标（如 **GitHub / YouTube / Telegram**），可以通过添加一段 CSS 来直接隐藏对应区域。
+
+### ✅ 方法 1：在 `index.html` 中添加样式
+
+将下面这段代码放到 `index.html` 的 `<head>` 标签内：
+
+```html
+<style>
+  /* 隐藏右下角社交图标 */
+  #socialIcons {
+    display: none !important;
+  }
+</style>
+```
+
+### 📍 示例位置
+
+```html
+<head>
+  <meta charset="UTF-8">
+  <title>Image Viewer</title>
+
+  <!-- 网站图标 -->
+  <link rel="icon" href="editora.ico" type="image/x-icon">
+
+  <!-- 隐藏右下角社交图标 -->
+  <style>
+    #socialIcons {
+      display: none !important;
+    }
+  </style>
+</head>
+```
+
+### 💡 说明
+
+- 这段代码会隐藏 ID 为 `socialIcons` 的元素。
+- 如果你的社交图标容器不是这个 ID，需要改成实际使用的选择器。
+- 加上 `!important` 可以避免样式被其他 CSS 覆盖。
+
+### 🛠️ 适用场景
+
+- 想让页面更简洁
+- 不希望展示个人社交链接
+- 准备用于正式部署版本
+
+
 ## 📄 License
 
 本项目遵循 [MIT License](LICENSE)，欢迎自由使用与修改。
